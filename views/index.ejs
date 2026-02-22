@@ -1,0 +1,240 @@
+<!-- views/index.ejs -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+
+  .hero-section {
+    position: relative;
+    text-align: center;
+    padding: 80px 20px 60px;
+    overflow: hidden;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    opacity: 0.35;
+  }
+  .orb-1 { width:400px; height:400px; background:#7c3aed; top:-100px; left:-100px; animation: orbFloat 8s ease-in-out infinite; }
+  .orb-2 { width:300px; height:300px; background:#1368ce; bottom:-80px; right:-60px; animation: orbFloat 6s ease-in-out infinite reverse; }
+  .orb-3 { width:200px; height:200px; background:#e21b3c; top:40%; left:50%; transform:translate(-50%,-50%); animation: orbFloat 7s ease-in-out infinite 2s; }
+  @keyframes orbFloat {
+    0%,100% { transform: translate(0,0); }
+    50%      { transform: translate(20px, -20px); }
+  }
+  .orb-3 { animation: orbFloat3 7s ease-in-out infinite 2s; }
+  @keyframes orbFloat3 {
+    0%,100% { transform: translate(-50%,-50%); }
+    50%      { transform: translate(calc(-50% + 20px), calc(-50% - 20px)); }
+  }
+
+  .hero-eyebrow {
+    display: inline-block;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--neon-yellow, #ffe234);
+    background: rgba(255,226,52,0.1);
+    border: 1px solid rgba(255,226,52,0.25);
+    border-radius: 20px;
+    padding: 6px 18px;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: #fff;
+    margin: 0 0 16px;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 4px 30px rgba(140,82,255,0.5);
+  }
+  .hero-title .accent { color: #ffe234; }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    color: rgba(255,255,255,0.55);
+    max-width: 520px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 2;
+    font-weight: 600;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-hero-primary {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.05rem;
+    padding: 16px 36px;
+    background: #26890c;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 0 #1a5c08, 0 8px 30px rgba(38,137,12,0.45);
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-hero-primary:hover { transform:translateY(-3px); box-shadow:0 9px 0 #1a5c08, 0 14px 40px rgba(38,137,12,0.55); color:#fff; text-decoration:none; }
+  .btn-hero-primary:active { transform:translateY(3px); box-shadow:0 3px 0 #1a5c08; }
+
+  .btn-hero-secondary {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.05rem;
+    padding: 16px 36px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(6px);
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-hero-secondary:hover { background:rgba(255,255,255,0.18); color:#fff; text-decoration:none; transform:translateY(-2px); }
+
+  /* ── FEATURE CARDS ── */
+  .features-section {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 20px 80px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .feature-card {
+    border-radius: 18px;
+    padding: 30px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+  }
+  .feature-card:hover { transform: translateY(-6px); }
+  .feature-card::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    pointer-events:none;
+  }
+
+  .feature-card:nth-child(1) { background:linear-gradient(145deg,#7c3aed,#4c1d95); box-shadow:0 8px 30px rgba(124,58,237,0.35); }
+  .feature-card:nth-child(2) { background:linear-gradient(145deg,#1368ce,#0d4d9a); box-shadow:0 8px 30px rgba(19,104,206,0.35); }
+  .feature-card:nth-child(3) { background:linear-gradient(145deg,#26890c,#1a5c08); box-shadow:0 8px 30px rgba(38,137,12,0.35); }
+
+  .feature-icon {
+    font-size: 2.4rem;
+    margin-bottom: 14px;
+    display: block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  }
+  .feature-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.15rem;
+    margin: 0 0 10px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .feature-desc {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    text-align: center;
+    margin: 20px auto 40px;
+    position: relative;
+    max-width: 400px;
+  }
+  .section-divider::before {
+    content:'';
+    position:absolute; top:50%; left:0; right:0;
+    height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+  }
+  .section-divider span {
+    position:relative; background:#1a0533;
+    padding:0 16px; font-size:0.72rem;
+    text-transform:uppercase; letter-spacing:3px;
+    color:rgba(255,255,255,0.3); font-weight:700;
+  }
+</style>
+
+<div class="hero-section">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-eyebrow">⚔️ Fantasy Character Builder</div>
+
+  <h1 class="hero-title">
+    Create Your<br><span class="accent">Legend.</span>
+  </h1>
+
+  <p class="hero-sub">
+    Build unique heroes with AI-powered backstories, custom avatars, and a global leaderboard.
+  </p>
+
+  <div class="hero-ctas">
+    <% if (!user) { %>
+      <a href="/register" class="btn-hero-primary">🗡️ Get Started</a>
+      <a href="/login"    class="btn-hero-secondary">Log In</a>
+    <% } else { %>
+      <a href="/dashboard" class="btn-hero-primary">🏰 Go to Dashboard</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="features-section">
+  <div class="section-divider"><span>What's inside</span></div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-icon">✨</span>
+      <h3 class="feature-title">AI-Powered Features</h3>
+      <p class="feature-desc">Generate rich backstories, get name suggestions, and auto-optimize stats for your character's race and class.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🎨</span>
+      <h3 class="feature-title">Deep Customization</h3>
+      <p class="feature-desc">Design every detail — skin tone, armor, weapons, accessories — and watch your avatar come to life in real time.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🏆</span>
+      <h3 class="feature-title">Global Leaderboard</h3>
+      <p class="feature-desc">Level up your characters and compete for the top three spots on the worldwide podium.</p>
+    </div>
+  </div>
+</div>

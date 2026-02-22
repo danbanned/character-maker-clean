@@ -1,0 +1,53 @@
+<!-- views/admin.ejs -->
+<h2>Admin Panel</h2>
+<p>Welcome, Admin! You have access to all system data.</p>
+
+<div class="admin-panel">
+    <h3>All Users (<%= users.length %>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(user => { %>
+            <tr>
+                <td><%= user.id.substring(0, 8) %>...</td>
+                <td><%= user.email %></td>
+                <td><%= user.role %></td>
+                <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-panel" style="margin-top: 30px;">
+    <h3>All Characters (<%= characters.length %>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Race/Class</th>
+                <th>Level</th>
+                <th>Owner</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% characters.forEach(char => { %>
+            <tr>
+                <td><%= char.name %></td>
+                <td><%= char.race %> <%= char.class %></td>
+                <td><%= char.level %></td>
+                <td><%= char.user.email %></td>
+                <td><%= new Date(char.createdAt).toLocaleDateString() %></td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>

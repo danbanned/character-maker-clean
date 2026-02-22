@@ -1,0 +1,38 @@
+# CharacterForge - Simple Character Maker App
+
+## Project Overview
+CharacterForge is a user-friendly character creation application designed for tabletop RPG players, writers, and game developers. It simplifies character creation with AI-powered features while maintaining simplicity.
+
+## Problem Summary
+Creating detailed RPG characters is time-consuming and overwhelming for beginners. Existing tools are either too complex or require paid subscriptions. Young gamers and writers need an accessible, free tool that helps them bring characters to life quickly.
+
+## Features
+- **User Authentication**: Email/password login with secure sessions
+- **Role-Based Access**: USER (create characters) and ADMIN (manage all users)
+- **Character Creation**: Simple form with name, race, class, level, backstory
+- **AI Integration**: 
+  - AI-generated character backstories
+  - Quest suggestion based on character traits
+  - Character image placeholder generation
+- **Dashboard**: View, edit, and manage all characters
+- **Admin Panel**: Manage users and view system statistics
+
+## Tech Stack
+- **Frontend**: Next.js 14, React, TypeScript
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Styling**: Basic CSS (no frameworks)
+- **AI**: Free-tier AI APIs (no API keys needed)
+
+## How to Run the Project
+
+### Prerequisites
+- Node.js 18+ and npm
+- PostgreSQL database
+
+### Installation
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/characterforge.git
+cd characterforge

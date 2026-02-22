@@ -1,0 +1,802 @@
+<!-- views/character-view.ejs -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+
+  :root {
+    --k-dark:   #1a0533;
+    --k-purple: #46178f;
+    --k-red:    #e21b3c;
+    --k-blue:   #1368ce;
+    --k-yellow: #d89e00;
+    --k-green:  #26890c;
+    --neon-purple: #8c52ff;
+    --neon-pink:   #ff3d9a;
+    --neon-cyan:   #00cfff;
+    --neon-yellow: #ffe234;
+  }
+
+  body, .cv-wrapper {
+    background: var(--k-dark) !important;
+    font-family: 'Nunito Sans', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  /* ── STAR FIELD ── */
+  .star-field {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    animation: twinkle var(--dur) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity:0; transform:scale(0.5); }
+    50%      { opacity:0.7; transform:scale(1); }
+  }
+
+  /* ── PAGE WRAPPER ── */
+  .cv-wrapper {
+    position: relative;
+    z-index: 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px 80px;
+  }
+
+  /* ── TOP NAV BAR ── */
+  .cv-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .cv-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    letter-spacing: -1px;
+    text-shadow: 0 4px 20px rgba(140,82,255,0.7);
+    margin: 0;
+  }
+  .cv-title span { color: var(--neon-yellow); }
+
+  .btn-back {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 12px 22px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .btn-back:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    text-decoration: none;
+    transform: translateX(-3px);
+  }
+
+  /* ── MAIN GRID ── */
+  .cv-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .cv-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── SHARED CARD ── */
+  .k-card {
+    background: linear-gradient(145deg, rgba(70,23,143,0.5), rgba(26,5,51,0.7));
+    border: 1px solid rgba(140,82,255,0.3);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .k-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .k-card-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--neon-cyan);
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .k-card-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), transparent);
+    border-radius: 2px;
+    opacity: 0.4;
+  }
+
+  /* ── AVATAR CARD ── */
+  .avatar-card {
+    text-align: center;
+    background: linear-gradient(160deg, #3b0764, #1a0533);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 40px rgba(140,82,255,0.25), 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  #avatarContainer {
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0 16px;
+    position: relative;
+  }
+  #avatarContainer > * {
+    animation: floatBig 3.2s ease-in-out infinite;
+    filter: drop-shadow(0 10px 24px rgba(140,82,255,0.6));
+  }
+  @keyframes floatBig {
+    0%,100% { transform: translateY(0px) rotate(-0.5deg); }
+    50%      { transform: translateY(-14px) rotate(0.5deg); }
+  }
+
+  /* Aura ring behind avatar */
+  .avatar-aura {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(140,82,255,0.25) 0%, transparent 70%);
+    animation: pulseAura 2.5s ease-in-out infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  @keyframes pulseAura {
+    0%,100% { transform:translate(-50%,-50%) scale(1); opacity:0.6; }
+    50%      { transform:translate(-50%,-50%) scale(1.2); opacity:1; }
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .btn-action {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    color: #fff;
+  }
+  .btn-action:hover { transform: scale(1.08) translateY(-2px); }
+  .btn-action.attack  { background: var(--k-red);   box-shadow: 0 4px 0 #8b0000, 0 4px 16px rgba(226,27,60,0.4); }
+  .btn-action.cast    { background: #7c3aed;         box-shadow: 0 4px 0 #4c1d95, 0 4px 16px rgba(124,58,237,0.4); }
+  .btn-action.victory { background: var(--k-green);  box-shadow: 0 4px 0 #1a5c08, 0 4px 16px rgba(38,137,12,0.4); }
+
+  /* ── QUICK FACTS GRID ── */
+  .quick-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .fact-chip {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .fact-chip .fact-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+  }
+  .fact-chip .fact-val {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #fff;
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .stat-block {
+    border-radius: 14px;
+    padding: 16px 10px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .stat-block:hover { transform: translateY(-4px) scale(1.04); }
+  .stat-block:nth-child(1) { background: linear-gradient(145deg, #7f1d1d, #450a0a); }
+  .stat-block:nth-child(2) { background: linear-gradient(145deg, #14532d, #052e16); }
+  .stat-block:nth-child(3) { background: linear-gradient(145deg, #1e3a8a, #0f172a); }
+  .stat-block:nth-child(4) { background: linear-gradient(145deg, #4c1d95, #2e1065); }
+  .stat-block:nth-child(5) { background: linear-gradient(145deg, #713f12, #3b1a06); }
+  .stat-block:nth-child(6) { background: linear-gradient(145deg, #881337, #4c0519); }
+
+  .stat-num {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 2.2rem;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .stat-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+  /* Stat bar */
+  .stat-bar-wrap {
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    height: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .stat-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.6);
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── APPEARANCE ── */
+  .appearance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .app-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .app-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 6px;
+  }
+  .app-val {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+  .color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  /* ── BACKSTORY ── */
+  .backstory-text {
+    background: rgba(0,0,0,0.3);
+    border-left: 3px solid var(--neon-purple);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px;
+    font-style: italic;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.85);
+    white-space: pre-wrap;
+  }
+
+  /* ── AI SECTION ── */
+  .ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, #7c3aed, #4c1d95);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+  }
+
+  .ai-analysis-text {
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .ai-note {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.4);
+    font-style: italic;
+    margin-bottom: 14px;
+  }
+
+  /* ── AI FEATURE BUTTONS ── */
+  .ai-feat-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  .btn-ai-feat {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.83rem;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #7c3aed, #4c1d95);
+    box-shadow: 0 4px 0 #2e1065, 0 4px 16px rgba(124,58,237,0.35);
+    transition: all 0.2s;
+  }
+  .btn-ai-feat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #2e1065, 0 8px 24px rgba(124,58,237,0.5);
+  }
+  .btn-ai-feat:active { transform: translateY(2px); box-shadow: 0 2px 0 #2e1065; }
+
+  /* ── ANIMATION CONTROLS ── */
+  #animationControls select, #animationControls button {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-family: 'Nunito Sans', sans-serif !important;
+    font-weight: 600 !important;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #7c3aed;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: 0 8px 30px rgba(124,58,237,0.6);
+    z-index: 9999;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── ACTION RESULT ── */
+  #actionResult {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: none;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<!-- Star field -->
+<div class="star-field" id="starField"></div>
+
+<div class="cv-wrapper">
+
+  <!-- Top bar -->
+  <div class="cv-topbar">
+    <h2 class="cv-title">⚔️ <span><%= character.name %></span></h2>
+    <a href="/dashboard" class="btn-back">← Dashboard</a>
+  </div>
+
+  <!-- Main grid -->
+  <div class="cv-grid">
+
+    <!-- ── LEFT: Avatar card ── -->
+    <div class="k-card avatar-card">
+      <div class="k-card-title">🧝 Character</div>
+
+      <div id="avatarContainer">
+        <div class="avatar-aura"></div>
+        <!-- Avatar rendered by JS -->
+      </div>
+
+      <div id="animationControls"></div>
+
+      <!-- Action buttons -->
+      <div class="action-btns">
+        <button class="btn-action attack"  onclick="doAction('attack')">⚔️ Attack</button>
+        <button class="btn-action cast"    onclick="doAction('cast')">✨ Cast</button>
+        <button class="btn-action victory" onclick="doAction('victory')">🎉 Victory</button>
+      </div>
+
+      <!-- Action result text -->
+      <div id="actionResult"></div>
+
+      <!-- Quick facts -->
+      <div class="quick-facts">
+        <div class="fact-chip">
+          <div class="fact-label">Race</div>
+          <div class="fact-val">🧝 <%= character.race %></div>
+        </div>
+        <div class="fact-chip">
+          <div class="fact-label">Class</div>
+          <div class="fact-val">⚔️ <%= character.class %></div>
+        </div>
+        <div class="fact-chip">
+          <div class="fact-label">Level</div>
+          <div class="fact-val">✨ <%= character.level %></div>
+        </div>
+        <div class="fact-chip">
+          <div class="fact-label">Created</div>
+          <div class="fact-val" style="font-size:0.8rem"><%= new Date(character.createdAt).toLocaleDateString() %></div>
+        </div>
+      </div>
+
+      <!-- AI analysis -->
+      <div style="margin-top:20px;">
+        <div class="k-card-title" style="color:var(--neon-purple);">🤖 AI Analysis</div>
+        <div class="ai-analysis-text"><%= aiAnalysis %></div>
+        <% if (character.aiNotes) { %>
+          <p class="ai-note"><%= character.aiNotes %></p>
+        <% } %>
+        <button class="btn-ai-feat" onclick="generateBackstoryForView('<%= character.id %>')" style="width:100%;">
+          📖 Generate Backstory
+        </button>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Details column ── -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+
+      <!-- Stats -->
+      <div class="k-card">
+        <div class="k-card-title">📊 Character Stats</div>
+        <div class="stats-grid">
+          <div class="stat-block">
+            <div class="stat-num"><%= character.strength %></div>
+            <div class="stat-label">Strength</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.strength %>"></div></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num"><%= character.dexterity %></div>
+            <div class="stat-label">Dexterity</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.dexterity %>"></div></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num"><%= character.constitution %></div>
+            <div class="stat-label">Constitution</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.constitution %>"></div></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num"><%= character.intelligence %></div>
+            <div class="stat-label">Intelligence</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.intelligence %>"></div></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num"><%= character.wisdom %></div>
+            <div class="stat-label">Wisdom</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.wisdom %>"></div></div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num"><%= character.charisma %></div>
+            <div class="stat-label">Charisma</div>
+            <div class="stat-bar-wrap"><div class="stat-bar" data-val="<%= character.charisma %>"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="k-card">
+        <div class="k-card-title">🎨 Appearance</div>
+        <div class="appearance-grid">
+          <div class="app-item">
+            <div class="app-label">Skin</div>
+            <div class="app-val">
+              <div class="color-swatch" style="background:<%= character.skinColor %>"></div>
+              <%= character.skinColor %>
+            </div>
+          </div>
+          <div class="app-item">
+            <div class="app-label">Hair</div>
+            <div class="app-val">
+              <div class="color-swatch" style="background:<%= character.hairColor %>"></div>
+              <%= character.hairStyle %>
+            </div>
+          </div>
+          <div class="app-item">
+            <div class="app-label">Eyes</div>
+            <div class="app-val">
+              <div class="color-swatch" style="background:<%= character.eyeColor %>"></div>
+              <%= character.eyeColor %>
+            </div>
+          </div>
+          <div class="app-item">
+            <div class="app-label">Armor</div>
+            <div class="app-val">
+              <div class="color-swatch" style="background:<%= character.armorColor %>"></div>
+              <%= character.armor %>
+            </div>
+          </div>
+          <div class="app-item">
+            <div class="app-label">Body Type</div>
+            <div class="app-val">🏋️ <%= character.bodyType %></div>
+          </div>
+          <div class="app-item">
+            <div class="app-label">Weapon</div>
+            <div class="app-val">⚔️ <%= character.weapon %></div>
+          </div>
+          <% if (character.accessory && character.accessory !== 'none') { %>
+          <div class="app-item">
+            <div class="app-label">Accessory</div>
+            <div class="app-val">💎 <%= character.accessory %></div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Backstory -->
+      <% if (character.backstory) { %>
+      <div class="k-card">
+        <div class="k-card-title">📜 Backstory</div>
+        <div class="backstory-text"><%= character.backstory %></div>
+      </div>
+      <% } %>
+
+      <!-- AI features -->
+      <div class="k-card">
+        <div class="k-card-title" style="color:var(--neon-purple);">🤖 AI Powers</div>
+        <div class="ai-badge">✨ Simulated AI Features</div>
+        <p style="color:rgba(255,255,255,0.6); font-size:0.88rem; margin:0 0 4px;">
+          Enhance your character with AI-powered tools.
+        </p>
+        <div class="ai-feat-btns">
+          <button class="btn-ai-feat" onclick="generateBackstoryForView('<%= character.id %>')">
+            ✨ Generate Backstory
+          </button>
+          <button class="btn-ai-feat" onclick="optimizeStatsForView('<%= character.id %>')">
+            🎯 Optimize Stats
+          </button>
+          <button class="btn-ai-feat" onclick="suggestEquipment('<%= character.id %>')">
+            🗡️ Suggest Equipment
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /right col -->
+  </div><!-- /cv-grid -->
+</div><!-- /cv-wrapper -->
+
+<div id="toast"></div>
+
+<script src="/js/avatarRenderer.js"></script>
+
+<script>
+// ── Star field ──────────────────────────────────────────────
+(function() {
+  const sf = document.getElementById('starField');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*4).toFixed(1)}s;`;
+    sf.appendChild(s);
+  }
+})();
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Action result banner ─────────────────────────────────────
+function showActionResult(msg) {
+  const el = document.getElementById('actionResult');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// ── Character data ───────────────────────────────────────────
+const characterData = <%- JSON.stringify(character) %>;
+
+// ── Render avatar ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('avatarContainer');
+  if (container && window.avatarRenderer) {
+    container.innerHTML =
+      '<div class="avatar-aura"></div>' +
+      window.avatarRenderer.generateSVG(characterData, 250, {
+        animated: true,
+        animationType: 'idle'
+      });
+  }
+
+  const controls = document.getElementById('animationControls');
+  if (controls && window.avatarRenderer && window.avatarRenderer.createAnimationControls) {
+    controls.innerHTML = window.avatarRenderer.createAnimationControls('avatarContainer');
+  }
+
+  // Animate stat bars on load
+  document.querySelectorAll('.stat-bar').forEach(bar => {
+    const val = parseInt(bar.dataset.val) || 0;
+    const pct = Math.min((val / 20) * 100, 100);
+    setTimeout(() => { bar.style.width = pct + '%'; }, 200);
+  });
+});
+
+// ── Actions ──────────────────────────────────────────────────
+function doAction(action) {
+  if (window.triggerAnimation) window.triggerAnimation('avatarContainer', action);
+
+  const charClass = '<%= character.class %>';
+  const messages = {
+    attack: [
+      '⚔️ A powerful strike lands true!',
+      '⚔️ The weapon connects with bone-crushing force!',
+      '⚔️ A precision blow finds its mark!'
+    ],
+    cast: {
+      'Mage':    ['✨ Fireball!', '✨ Lightning Bolt!', '✨ Ice Storm!'],
+      'Cleric':  ['✨ Divine Smite!', '✨ Healing Word!', '✨ Turn Undead!'],
+      'Ranger':  ["✨ Hunter's Mark!", '✨ Hail of Thorns!', '✨ Ensnaring Strike!'],
+      'Warrior': ['✨ Battle Cry!', '✨ Whirlwind!', '✨ Shield Bash!'],
+      'Rogue':   ['✨ Smoke Bomb!', '✨ Poison Strike!', '✨ Shadow Step!']
+    },
+    victory: [
+      '🎉 Victory! The crowd goes wild!',
+      '🎉 Triumphant! A hero stands tall!',
+      '🎉 Glorious win! Legend grows!'
+    ]
+  };
+
+  let msg;
+  if (action === 'cast') {
+    const spells = messages.cast[charClass] || ['✨ Special Ability!'];
+    msg = spells[Math.floor(Math.random() * spells.length)];
+  } else {
+    const arr = messages[action];
+    msg = arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  setTimeout(() => showActionResult(msg), 300);
+}
+
+// ── Backstory ─────────────────────────────────────────────────
+async function generateBackstoryForView(characterId) {
+  showToast('✨ Generating backstory…');
+  try {
+    const res = await fetch('/ai/generate-backstory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ characterId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('📖 Backstory ready!');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      showToast('⚠️ Could not generate backstory');
+    }
+  } catch (e) {
+    showToast('⚠️ Network error');
+  }
+}
+
+// ── Optimize stats ────────────────────────────────────────────
+async function optimizeStatsForView(characterId) {
+  const charClass = '<%= character.class %>';
+  const templates = {
+    'Warrior': { strength:16, dexterity:14, constitution:15, intelligence:8,  wisdom:10, charisma:12 },
+    'Mage':    { strength:8,  dexterity:12, constitution:10, intelligence:16, wisdom:14, charisma:13 },
+    'Rogue':   { strength:12, dexterity:16, constitution:13, intelligence:14, wisdom:10, charisma:15 },
+    'Cleric':  { strength:12, dexterity:10, constitution:14, intelligence:13, wisdom:16, charisma:15 },
+    'Ranger':  { strength:14, dexterity:15, constitution:13, intelligence:12, wisdom:14, charisma:10 }
+  };
+  const stats = templates[charClass] || { strength:10, dexterity:10, constitution:10, intelligence:10, wisdom:10, charisma:10 };
+  showToast('🎯 Optimizing stats…');
+  try {
+    const res = await fetch('/character/update-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ characterId, stats, aiNotes: `AI-optimized for ${charClass} on ${new Date().toLocaleDateString()}` })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('✅ Stats optimized for ' + charClass + '!');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      showToast('⚠️ Could not optimize stats');
+    }
+  } catch (e) {
+    showToast('⚠️ Network error');
+  }
+}
+
+// ── Suggest equipment ─────────────────────────────────────────
+function suggestEquipment() {
+  const charClass = '<%= character.class %>';
+  const race = '<%= character.race %>';
+  const gear = {
+    'Warrior': 'Plate armor, greatsword & shield',
+    'Mage':    'Enchanted robe, arcane staff',
+    'Rogue':   'Shadow leather, twin daggers',
+    'Cleric':  'Chainmail, blessed mace & holy symbol',
+    'Ranger':  'Studded leather, longbow & quiver'
+  };
+  showToast(`🗡️ ${race} ${charClass}: ${gear[charClass] || 'Adventuring gear'}`);
+}
+</script>

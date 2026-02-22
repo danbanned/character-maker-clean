@@ -1,0 +1,281 @@
+<!-- views/layout.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CharacterQuest</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --k-dark:      #1a0533;
+      --k-purple:    #46178f;
+      --k-red:       #e21b3c;
+      --k-blue:      #1368ce;
+      --k-yellow:    #d89e00;
+      --k-green:     #26890c;
+      --neon-purple: #8c52ff;
+      --neon-cyan:   #00cfff;
+      --neon-yellow: #ffe234;
+      --neon-pink:   #ff3d9a;
+    }
+
+    html, body {
+      background: var(--k-dark);
+      color: #fff;
+      font-family: 'Nunito Sans', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAVBAR ── */
+    .k-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(26,5,51,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(140,82,255,0.2);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .k-nav-brand {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1.35rem;
+      letter-spacing: -0.5px;
+      color: #fff;
+      text-decoration: none;
+      white-space: nowrap;
+      text-shadow: 0 2px 12px rgba(140,82,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .k-nav-brand span { color: var(--neon-yellow); }
+    .k-nav-brand:hover { text-decoration: none; color: #fff; }
+
+    .k-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+
+    .k-nav-links a {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .k-nav-links a:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      text-decoration: none;
+    }
+    .k-nav-links a.active { background: var(--neon-purple); color: #fff; }
+
+    .k-nav-links .nav-create a {
+      background: var(--k-green);
+      color: #fff;
+      box-shadow: 0 3px 0 #1a5c08;
+    }
+    .k-nav-links .nav-create a:hover {
+      background: #2ea30d;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 0 #1a5c08;
+    }
+
+    .k-nav-links .nav-admin a {
+      background: rgba(226,27,60,0.15);
+      color: #ff6b82;
+      border: 1px solid rgba(226,27,60,0.3);
+    }
+    .k-nav-links .nav-admin a:hover {
+      background: rgba(226,27,60,0.3);
+      color: #fff;
+    }
+
+    .k-nav-links .nav-logout a {
+      color: rgba(255,255,255,0.4);
+    }
+    .k-nav-links .nav-logout a:hover {
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* Email badge */
+    .nav-email-badge {
+      font-size: 0.72rem;
+      background: rgba(140,82,255,0.2);
+      border: 1px solid rgba(140,82,255,0.3);
+      border-radius: 20px;
+      padding: 3px 10px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 600;
+      white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Mobile hamburger */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    @media (max-width: 700px) {
+      .nav-toggle { display: block; }
+      .k-nav-links {
+        display: none;
+        position: absolute;
+        top: 64px;
+        left: 0; right: 0;
+        background: rgba(26,5,51,0.98);
+        flex-direction: column;
+        padding: 16px;
+        border-bottom: 1px solid rgba(140,82,255,0.2);
+        gap: 8px;
+      }
+      .k-nav-links.open { display: flex; }
+      .k-nav-links a { width: 100%; padding: 12px 16px; }
+      .nav-email-badge { display: none; }
+    }
+
+    /* ── GLOBAL FLASH ALERTS ── */
+    .global-alerts {
+      max-width: 1200px;
+      margin: 16px auto 0;
+      padding: 0 20px;
+    }
+    .global-alert {
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .global-alert.error   { background:rgba(226,27,60,0.2);  border:1px solid rgba(226,27,60,0.4);  }
+    .global-alert.success { background:rgba(38,137,12,0.2);  border:1px solid rgba(38,137,12,0.4);  }
+
+    /* ── PAGE BODY ── */
+    .k-page {
+      min-height: calc(100vh - 64px);
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--k-dark); }
+    ::-webkit-scrollbar-thumb { background: rgba(140,82,255,0.4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(140,82,255,0.7); }
+
+    /* ── SELECTION ── */
+    ::selection { background: rgba(140,82,255,0.4); color:#fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <% if (user) { %>
+  <nav class="k-nav">
+    <a href="/dashboard" class="k-nav-brand">⚔️ Character<span>Quest</span></a>
+
+    <button class="nav-toggle" onclick="this.nextElementSibling.classList.toggle('open')">☰</button>
+
+    <ul class="k-nav-links">
+      <li><a href="/dashboard">🏰 Dashboard</a></li>
+      <li class="nav-create"><a href="/character/create">+ New Character</a></li>
+      <% if (user.role === 'ADMIN') { %>
+        <li class="nav-admin"><a href="/admin">🔐 Admin</a></li>
+      <% } %>
+      <li class="nav-logout"><a href="/logout">↩ Logout</a></li>
+      <li><div class="nav-email-badge"><%= user.email %></div></li>
+    </ul>
+  </nav>
+  <% } else { %>
+  <nav class="k-nav">
+    <a href="/" class="k-nav-brand">⚔️ Character<span>Quest</span></a>
+    <ul class="k-nav-links">
+      <li><a href="/login">Log In</a></li>
+      <li class="nav-create"><a href="/register">Get Started</a></li>
+    </ul>
+  </nav>
+  <% } %>
+
+  <!-- ── FLASH MESSAGES ── -->
+  <% if (messages) { %>
+  <div class="global-alerts">
+    <% if (messages.error && messages.error.length) { %>
+      <div class="global-alert error">⚠️ <%= Array.isArray(messages.error) ? messages.error[0] : messages.error %></div>
+    <% } %>
+    <% if (messages.success && messages.success.length) { %>
+      <div class="global-alert success">✅ <%= Array.isArray(messages.success) ? messages.success[0] : messages.success %></div>
+    <% } %>
+  </div>
+  <% } %>
+
+  <!-- ── PAGE CONTENT ── -->
+  <div class="k-page">
+    <%- body %>
+  </div>
+
+  <script>
+    async function generateBackstory(characterId) {
+      const response = await fetch('/ai/generate-backstory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        location.reload();
+      }
+    }
+
+    async function suggestName(race, charClass) {
+      const response = await fetch('/ai/suggest-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ race, charClass })
+      });
+      const data = await response.json();
+      if (data.success) {
+        const el = document.getElementById('name');
+        if (el) el.value = data.name;
+      }
+    }
+  </script>
+</body>
+</html>

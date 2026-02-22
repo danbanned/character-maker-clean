@@ -1,0 +1,61 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  loginAttempts     Int       @default(0)            // failed attempts counter
+  lockUntil         DateTime?                        // timestamp when account is locked
+  resetPasswordToken String?  @unique                 // for password reset
+  resetPasswordExpires DateTime?                      // token expiry
+  characters Character[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model Character {
+  id          String   @id @default(cuid())
+  name        String
+  race        String
+  class       String
+  level       Int      @default(1)
+  strength    Int      @default(10)
+  dexterity   Int      @default(10)
+  constitution Int     @default(10)
+  intelligence Int     @default(10)
+  wisdom      Int      @default(10)
+  charisma    Int      @default(10)
+  backstory   String?
+  aiNotes     String?
+  
+  // New appearance fields
+  skinColor   String   @default("#fdd5b1")
+  hairColor   String   @default("#3d2817")
+  hairStyle   String   @default("short")
+  eyeColor    String   @default("#4a90e2")
+  bodyType    String   @default("average")
+  armor       String   @default("leather")
+  armorColor  String   @default("#8b4513")
+  weapon      String   @default("sword")
+  accessory   String   @default("none")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}

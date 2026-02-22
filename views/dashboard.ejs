@@ -1,0 +1,650 @@
+<!-- views/dashboard.ejs -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+
+  :root {
+    --kahoot-purple: #46178f;
+    --kahoot-dark: #1a0533;
+    --kahoot-red: #e21b3c;
+    --kahoot-blue: #1368ce;
+    --kahoot-yellow: #d89e00;
+    --kahoot-green: #26890c;
+    --neon-purple: #8c52ff;
+    --neon-pink: #ff3d9a;
+    --neon-cyan: #00cfff;
+    --neon-yellow: #ffe234;
+  }
+
+  body, .dashboard-wrapper {
+    background: var(--kahoot-dark) !important;
+    font-family: 'Nunito Sans', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── FLOATING PARTICLE STARS ── */
+  .star-field {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    opacity: 0;
+    animation: twinkle var(--dur) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 0.8; transform: scale(1); }
+  }
+
+  /* ── HEADER BANNER ── */
+  .kahoot-header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 20px 20px;
+  }
+  .kahoot-logo {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: -1px;
+    color: #fff;
+    text-shadow: 0 4px 20px rgba(140,82,255,0.8);
+    margin: 0;
+  }
+  .kahoot-logo span {
+    color: var(--neon-yellow);
+  }
+  .kahoot-subtitle {
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ── PAGE CONTENT WRAPPER ── */
+  .page-content {
+    position: relative;
+    z-index: 10;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ── SECTION HEADINGS ── */
+  .section-label {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 40px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 3px;
+    background: linear-gradient(90deg, var(--neon-purple), transparent);
+    border-radius: 2px;
+  }
+
+  /* ── PODIUM ── */
+  .podium-section {
+    margin: 20px 0 40px;
+  }
+  .podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .podium-item {
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 20px;
+    width: 190px;
+    text-align: center;
+    position: relative;
+    overflow: visible;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .podium-item:hover { transform: translateY(-8px) scale(1.03); }
+
+  .podium-item.first  { background: linear-gradient(160deg, #7c3aed, #4c1d95); height: 230px; border: 2px solid var(--neon-yellow); box-shadow: 0 0 30px rgba(255,226,52,0.4), 0 12px 40px rgba(0,0,0,0.5); }
+  .podium-item.second { background: linear-gradient(160deg, #1e40af, #1e3a8a); height: 190px; border: 2px solid var(--neon-cyan); box-shadow: 0 0 20px rgba(0,207,255,0.3), 0 12px 40px rgba(0,0,0,0.5); }
+  .podium-item.third  { background: linear-gradient(160deg, #9f1239, #7f1d1d); height: 160px; border: 2px solid var(--neon-pink); box-shadow: 0 0 20px rgba(255,61,154,0.3), 0 12px 40px rgba(0,0,0,0.5); }
+
+  .podium-medal {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .podium-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.05rem;
+    word-break: break-word;
+    margin: 6px 0 2px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .podium-score {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 2px 10px;
+    display: inline-block;
+  }
+
+  /* Avatar wrapper for podium with hover float */
+  .avatar-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .avatar-wrapper > div {
+    animation: floatAvatar 3s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+  }
+  .podium-item.first  .avatar-wrapper > div { animation-delay: 0s; }
+  .podium-item.second .avatar-wrapper > div { animation-delay: 0.8s; }
+  .podium-item.third  .avatar-wrapper > div { animation-delay: 1.6s; }
+
+  @keyframes floatAvatar {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+  }
+
+  /* ── CREATE BTN ── */
+  .btn-create-new {
+    display: flex;
+    align-items:center;
+    gap: 8px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    padding: 1px 8px;
+    background: var(--kahoot-green);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    scale: 66%;
+    transition: all 0.2s;
+    box-shadow: 0 4px 0 #1a5c08, 0 6px 20px rgba(38,137,12,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .btn-create-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #1a5c08, 0 10px 30px rgba(38,137,12,0.5);
+    background: #2ea30d;
+    color: #fff;
+    text-decoration: none;
+  }
+  .btn-create-new:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #1a5c08;
+  }
+
+  /* ── CHARACTER GRID ── */
+  .character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  /* Kahoot-style color blocks cycling */
+  .character-card {
+    border-radius: 16px;
+    padding: 24px 20px 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+    border: none;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+  .character-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .character-card:nth-child(4n+1) { background: linear-gradient(145deg, #e21b3c, #a01229); box-shadow: 0 8px 30px rgba(226,27,60,0.3); }
+  .character-card:nth-child(4n+2) { background: linear-gradient(145deg, #1368ce, #0d4d9a); box-shadow: 0 8px 30px rgba(19,104,206,0.3); }
+  .character-card:nth-child(4n+3) { background: linear-gradient(145deg, #d89e00, #a07400); box-shadow: 0 8px 30px rgba(216,158,0,0.3); }
+  .character-card:nth-child(4n+4) { background: linear-gradient(145deg, #26890c, #1a5c08); box-shadow: 0 8px 30px rgba(38,137,12,0.3); }
+
+  /* Sheen overlay */
+  .character-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Corner shape like Kahoot */
+  .card-shape {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.15);
+    pointer-events: none;
+  }
+
+  .character-avatar-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+    flex: 0 0 auto;
+  }
+  .character-avatar-wrap > div {
+    animation: floatCard 3.5s ease-in-out infinite;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+  }
+
+  @keyframes floatCard {
+    0%, 100% { transform: translateY(0px) rotate(-1deg); }
+    50%       { transform: translateY(-8px) rotate(1deg); }
+  }
+
+  .char-name {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .char-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .char-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+  .char-backstory {
+    font-size: 0.82rem;
+    opacity: 0.85;
+    line-height: 1.5;
+    flex: 1;
+    margin: 6px 0 12px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-card {
+    flex: 1;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .btn-view {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .btn-view:hover { background: rgba(255,255,255,0.38); color: #fff; text-decoration: none; }
+  .btn-ai {
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .btn-ai:hover { background: rgba(0,0,0,0.5); color: #fff; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.03);
+  }
+  .empty-state h3 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+  .empty-state p { opacity: 0.5; margin-bottom: 24px; }
+
+  /* ── FLASH MESSAGES ── */
+  .flash-container { margin: 10px 0 20px; }
+  .flash-msg {
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .flash-success { background: rgba(38,137,12,0.3); border: 1px solid #26890c; }
+  .flash-error   { background: rgba(226,27,60,0.3); border: 1px solid #e21b3c; }
+
+  /* ── NOTIFICATION TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #7c3aed;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: 0 8px 30px rgba(124,58,237,0.6);
+    z-index: 9999;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── LOADING SPINNER ON AI BTN ── */
+  .btn-ai.loading { opacity: 0.6; pointer-events: none; }
+  .btn-ai.loading::before { content: '⏳ '; }
+
+  @media (max-width: 600px) {
+    .podium { gap: 10px; }
+    .podium-item { width: 150px; }
+    .kahoot-logo { font-size: 2rem; }
+  }
+</style>
+
+<!-- Star field background -->
+<div class="star-field" id="starField"></div>
+
+<div class="dashboard-wrapper">
+  <!-- Header -->
+  <div class="kahoot-header">
+    <h1 class="kahoot-logo">⚔️ Character<span>Quest</span></h1>
+    <p class="kahoot-subtitle">Your Adventure Awaits</p>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Flash messages -->
+    <% if (messages && (messages.success || messages.error)) { %>
+    <div class="flash-container">
+      <% if (messages.success && messages.success.length) { %>
+        <div class="flash-msg flash-success">✅ <%= messages.success[0] %></div>
+      <% } %>
+      <% if (messages.error && messages.error.length) { %>
+        <div class="flash-msg flash-error">⚠️ <%= messages.error[0] %></div>
+      <% } %>
+    </div>
+    <% } %>
+
+    <!-- Podium -->
+    <% if (topCharacters && topCharacters.length > 0) { %>
+    <div class="podium-section">
+      <div class="section-label">🏆 Global Leaderboard</div>
+      <div class="podium">
+
+        <% if (topCharacters.length >= 2) { %>
+        <div class="podium-item second" onclick="window.location='/character/<%= topCharacters[1].id %>'">
+          <div class="avatar-wrapper">
+            <div id="podium-avatar-<%= topCharacters[1].id %>"></div>
+          </div>
+          <div class="podium-medal">🥈</div>
+          <div class="podium-name"><%= topCharacters[1].name %></div>
+          <div class="podium-score">⚡ <%= topCharacters[1].score %> pts</div>
+        </div>
+        <% } %>
+
+        <% if (topCharacters.length >= 1) { %>
+        <div class="podium-item first" onclick="window.location='/character/<%= topCharacters[0].id %>'">
+          <div class="avatar-wrapper">
+            <div id="podium-avatar-<%= topCharacters[0].id %>"></div>
+          </div>
+          <div class="podium-medal">🥇</div>
+          <div class="podium-name"><%= topCharacters[0].name %></div>
+          <div class="podium-score">⚡ <%= topCharacters[0].score %> pts</div>
+        </div>
+        <% } %>
+
+        <% if (topCharacters.length >= 3) { %>
+        <div class="podium-item third" onclick="window.location='/character/<%= topCharacters[2].id %>'">
+          <div class="avatar-wrapper">
+            <div id="podium-avatar-<%= topCharacters[2].id %>"></div>
+          </div>
+          <div class="podium-medal">🥉</div>
+          <div class="podium-name"><%= topCharacters[2].name %></div>
+          <div class="podium-score">⚡ <%= topCharacters[2].score %> pts</div>
+        </div>
+        <% } %>
+
+      </div>
+    </div>
+    <% } %>
+
+    <!-- My Characters section -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div class="section-label" style="margin:0; flex:1">🎮 Your Characters</div>
+      <a href="/character/create" class="btn-create-new">+ New Character</a>
+    </div>
+
+    <div class="character-grid" style="margin-top:20px;">
+      <% if (characters && characters.length > 0) { %>
+        <% characters.forEach((character, idx) => { %>
+        <div class="character-card" id="card-<%= character.id %>">
+          <div class="card-shape"></div>
+
+          <!-- Floating avatar -->
+          <div class="character-avatar-wrap">
+            <div id="miniAvatar-<%= character.id %>"
+                 style="animation-delay: <%= (idx * 0.4) %>s"></div>
+          </div>
+
+          <div class="char-name"><%= character.name %></div>
+          <div class="char-meta">
+            <span class="char-badge">🧝 <%= character.race %></span>
+            <span class="char-badge">⚔️ <%= character.class %></span>
+            <span class="char-badge">Lv.<%= character.level %></span>
+          </div>
+
+          <% if (character.backstory) { %>
+          <p class="char-backstory"><%= character.backstory %></p>
+          <% } else { %>
+          <p class="char-backstory" style="opacity:0.4; font-style:italic;">No backstory yet…</p>
+          <% } %>
+
+          <div class="card-actions">
+            <a href="/character/<%= character.id %>" class="btn-card btn-view">👁 View</a>
+            <button onclick="generateBackstory('<%= character.id %>')"
+                    class="btn-card btn-ai" id="ai-btn-<%= character.id %>">
+              ✨ AI Story
+            </button>
+          </div>
+        </div>
+        <% }) %>
+      <% } else { %>
+        <div class="empty-state">
+          <div style="font-size:4rem; margin-bottom:12px;">🧙</div>
+          <h3>No characters yet!</h3>
+          <p>Create your first hero and start your adventure.</p>
+          <a href="/character/create" class="btn-create-new">🗡️ Create Your First Character</a>
+        </div>
+      <% } %>
+    </div>
+
+  </div><!-- /page-content -->
+</div><!-- /dashboard-wrapper -->
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<!-- Avatar renderer -->
+<script src="/js/avatarRenderer.js"></script>
+
+<script>
+// ── Star field ──────────────────────────────────────────────
+(function() {
+  const sf = document.getElementById('starField');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --dur:${(Math.random()*3+2).toFixed(1)}s;
+      animation-delay:${(Math.random()*4).toFixed(1)}s;
+    `;
+    sf.appendChild(s);
+  }
+})();
+
+// ── Toast helper ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Generate backstory ───────────────────────────────────────
+async function generateBackstory(characterId) {
+  const btn = document.getElementById('ai-btn-' + characterId);
+  if (btn) { btn.classList.add('loading'); btn.textContent = 'Generating…'; }
+
+  try {
+    const resp = await fetch('/ai/generate-backstory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ characterId })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      showToast('✨ Backstory generated!');
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      showToast('⚠️ Could not generate backstory');
+      if (btn) { btn.classList.remove('loading'); btn.textContent = '✨ AI Story'; }
+    }
+  } catch (e) {
+    showToast('⚠️ Network error');
+    if (btn) { btn.classList.remove('loading'); btn.textContent = '✨ AI Story'; }
+  }
+}
+
+// ── Render avatars ────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Podium avatars
+  <% if (topCharacters && topCharacters.length > 0) { %>
+    <% topCharacters.forEach(char => { %>
+    (function() {
+      const el = document.getElementById('podium-avatar-<%= char.id %>');
+      if (el && window.avatarRenderer) {
+        el.innerHTML = window.avatarRenderer.generateSVG({
+          skinColor:  '<%= char.skinColor %>',
+          hairColor:  '<%= char.hairColor %>',
+          hairStyle:  '<%= char.hairStyle %>',
+          eyeColor:   '<%= char.eyeColor %>',
+          bodyType:   '<%= char.bodyType %>',
+          armor:      '<%= char.armor %>',
+          armorColor: '<%= char.armorColor %>',
+          weapon:     '<%= char.weapon %>',
+          accessory:  '<%= char.accessory %>'
+        }, 100);
+      }
+    })();
+    <% }); %>
+  <% } %> 
+
+  // Character card avatars
+  <% if (characters && characters.length > 0) { %>
+    <% characters.forEach((character, idx) => { %>
+    (function() {
+      const el = document.getElementById('miniAvatar-<%= character.id %>');
+      if (el && window.avatarRenderer) {
+        el.innerHTML = window.avatarRenderer.generateSVG({
+          skinColor:  '<%= character.skinColor %>',
+          hairColor:  '<%= character.hairColor %>',
+          hairStyle:  '<%= character.hairStyle %>',
+          eyeColor:   '<%= character.eyeColor %>',
+          bodyType:   '<%= character.bodyType %>',
+          armor:      '<%= character.armor %>',
+          armorColor: '<%= character.armorColor %>',
+          weapon:     '<%= character.weapon %>',
+          accessory:  '<%= character.accessory %>'
+        }, 140, { animated: true, animationType: 'idle' });
+
+        // Extra hover glow
+        el.addEventListener('mouseenter', () => {
+          const svg = el.querySelector('svg');
+          if (svg) { svg.style.filter = 'drop-shadow(0 0 18px rgba(255,255,255,0.7))'; }
+        });
+        el.addEventListener('mouseleave', () => {
+          const svg = el.querySelector('svg');
+          if (svg) { svg.style.filter = 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'; }
+        });
+        el.addEventListener('click', () => window.location.href = '/character/<%= character.id %>');
+        el.style.cursor = 'pointer';
+      }
+    })();
+    <% }); %>
+  <% } %>
+
+});
+</script>

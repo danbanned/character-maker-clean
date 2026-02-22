@@ -1,0 +1,180 @@
+/* public/css/animations.css */
+@keyframes breathing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes blinking {
+  0%, 96%, 100% { 
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  97%, 99% { 
+    transform: scaleY(0.1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes hairFlow {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+@keyframes weaponIdle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-1deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(1deg); }
+}
+
+@keyframes capeFlow {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px) skewX(-1deg); }
+  75% { transform: translateX(2px) skewX(1deg); }
+}
+
+@keyframes spellGlow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@keyframes sparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Character Animation Classes */
+.character-animated {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+.eye-animated {
+  animation: blinking 3s ease-in-out infinite;
+}
+
+.long-hair-animated {
+  animation: hairFlow 4s ease-in-out infinite;
+}
+
+.weapon-animated {
+  animation: weaponIdle 2s ease-in-out infinite;
+  transform-origin: center top;
+}
+
+.cape-animated {
+  animation: capeFlow 3s ease-in-out infinite;
+}
+
+.spell-animated {
+  animation: spellGlow 1.5s ease-in-out infinite;
+}
+
+/* Sparkle effects for magic */
+.sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, #ffeb3b, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sparkle 1s ease-out forwards;
+}
+
+/* Attack animations */
+@keyframes attackSwing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-45deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(45deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes castSpell {
+  0% { 
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% { 
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.attack-swing {
+  animation: attackSwing 0.5s ease-in-out;
+}
+
+.cast-spell {
+  animation: castSpell 1s ease-out forwards;
+}
+
+/* Character state animations */
+.damage-flash {
+  animation: damageFlash 0.3s ease-in-out;
+}
+
+@keyframes damageFlash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.5); }
+}
+
+.victory-dance {
+  animation: victoryDance 2s ease-in-out infinite;
+}
+
+@keyframes victoryDance {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-10px) rotate(-5deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* Toggle animation button */
+.animation-controls {
+  background: #08b7e3;
+  color: black;
+}
+
+.animation-btn {
+  background: #9b59b6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s;
+}
+
+.animation-btn:hover {
+  background: #8e44ad;
+  transform: translateY(-2px);
+}
+
+.animation-btn.paused::after {
+  content: "▶";
+  margin-left: 8px;
+}
+
+.animation-btn.running::after {
+  content: "⏸";
+  margin-left: 8px;
+}
