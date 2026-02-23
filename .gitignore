@@ -14,11 +14,3 @@ UserSettings/
 
 # Node (if applicable)
 node_modules/
-
-# Keep deployed Unity WebGL output
-!public/Unity/
-!public/Unity/BuildWebGL/
-!public/Unity/BuildWebGL/Build/
-!public/Unity/BuildWebGL/Build/**
-!public/Unity/BuildWebGL/TemplateData/
-!public/Unity/BuildWebGL/TemplateData/**
