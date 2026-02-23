@@ -8,13 +8,15 @@
   ],
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
       "dest": "server.js"
     }
   ],
+  "functions": {
+    "server.js": {
+      "includeFiles": "public/**"
+    }
+  },
   "headers": [
     {
       "source": "/Unity/BuildWebGL/Build/(.*)\\.wasm",
