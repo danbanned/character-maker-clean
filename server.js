@@ -87,6 +87,204 @@ app.get('/', (req, res) => {
   res.render('index', { user: req.session.user });
 });
 
+const simulateAI = {
+  generateBackstory: (character) => {
+    const races = {
+      'Human': 'adaptable and versatile',
+      'Elf': 'graceful and long-lived',
+      'Dwarf': 'sturdy and traditional',
+      'Halfling': 'lucky and cheerful',
+      'Orc': 'strong and tribal'
+    };
+    
+    const classes = {
+      'Warrior': 'mighty warrior',
+      'Mage': 'wise spellcaster',
+      'Rogue': 'stealthy trickster',
+      'Cleric': 'devout healer',
+      'Ranger': 'nature-bound hunter'
+    };
+
+    const traits = [
+      'brave and determined',
+      'mysterious past',
+      'seeking redemption',
+      'on a great quest',
+      'hiding a secret',
+      'blessed by fate',
+      'cursed by magic'
+    ];
+
+    const randomTrait = traits[Math.floor(Math.random() * traits.length)];
+    
+    return `${character.name} is a ${races[character.race] || 'unique'} ${character.race} who became a ${classes[character.class] || 'skilled'} ${character.class}. Known to be ${randomTrait}, they embark on adventures across the land.`;
+  },
+
+  suggestName: (race, charClass) => {
+    const nameSuggestions = {
+      'Human': ['Aric', 'Bryn', 'Cael', 'Dane', 'Eris'],
+      'Elf': ['Elara', 'Faelen', 'Galad', 'Ithil', 'Lorien'],
+      'Dwarf': ['Borin', 'Durin', 'Gimli', 'Thrain', 'Ulfgar'],
+      'Halfling': ['Bilbo', 'Frodo', 'Pippin', 'Samwise', 'Merry'],
+      'Orc': ['Grom', 'Karg', 'Mog', 'Thrak', 'Urzog']
+    };
+
+    const raceNames = nameSuggestions[race] || ['Unknown'];
+    return raceNames[Math.floor(Math.random() * raceNames.length)];
+  },
+
+  analyzeStats: (stats) => {
+    const total = Object.values(stats).reduce((a, b) => a + b, 0);
+    if (total > 80) return 'Exceptional potential';
+    if (total > 65) return 'Above average abilities';
+    if (total > 50) return 'Average capabilities';
+    return 'Could use improvement';
+  }
+};
+
+
+// Route for viewing a single character
+app.get('/character-view/:id', isAuthenticated, async (req, res) => {
+  try {
+    console.log('=== CHARACTER-VIEW ROUTE HIT ===');
+    console.log('Character ID requested:', req.params.id);
+    console.log('User ID from session:', req.session.userId);
+    
+    const character = await prisma.character.findUnique({
+      where: { id: req.params.id }
+    });
+    
+    console.log('Character found:', character ? 'YES' : 'NO');
+    if (character) {
+      console.log('Character name:', character.name);
+      console.log('Character userId:', character.userId);
+    }
+    
+    if (!character) {
+      console.log('Character not found, redirecting');
+      req.flash('error', 'Character not found');
+      return res.redirect('/dashboard');
+    }
+    
+    // Check if character belongs to logged-in user
+    if (character.userId !== req.session.userId) {
+      console.log('Unauthorized - character userId:', character.userId, 'session userId:', req.session.userId);
+      req.flash('error', 'Unauthorized');
+      return res.redirect('/dashboard');
+    }
+    
+    // Get all characters for the dropdown
+    console.log('Fetching all characters for user:', req.session.userId);
+    const allCharacters = await prisma.character.findMany({
+      where: { userId: req.session.userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    console.log('All characters found:', allCharacters ? allCharacters.length : 0);
+    if (allCharacters && allCharacters.length > 0) {
+      console.log('First character in list:', allCharacters[0].name);
+    }
+    
+    // Generate AI analysis
+    const aiAnalysis = simulateAI.analyzeStats({
+      strength: character.strength,
+      dexterity: character.dexterity,
+      constitution: character.constitution,
+      intelligence: character.intelligence,
+      wisdom: character.wisdom,
+      charisma: character.charisma
+    });
+    
+    console.log('Rendering character-view with data:');
+    console.log('- character exists:', !!character);
+    console.log('- allCharacters length:', allCharacters ? allCharacters.length : 0);
+    console.log('- aiAnalysis:', aiAnalysis);
+    
+    res.render('character-view', { 
+      character, 
+      allCharacters,
+      aiAnalysis,
+      user: req.session.user,
+      messages: req.flash() 
+    });
+    
+  } catch (error) {
+    console.error('Error loading character view:', error);
+    req.flash('error', 'Server error');
+    res.redirect('/dashboard');
+  }
+});
+
+app.get('/character/create', isAuthenticated, (req, res) => {
+  res.render('character-create', { 
+    user: req.session.user,
+    messages: req.flash() 
+  });
+});
+
+
+app.post('/character/create', isAuthenticated, async (req, res) => {
+  try {
+    const character = await prisma.character.create({
+      data: {
+        name: req.body.name,
+        race: req.body.race,
+        class: req.body.class,
+        level: parseInt(req.body.level) || 1,
+        strength: parseInt(req.body.strength) || 10,
+        dexterity: parseInt(req.body.dexterity) || 10,
+        constitution: parseInt(req.body.constitution) || 10,
+        intelligence: parseInt(req.body.intelligence) || 10,
+        wisdom: parseInt(req.body.wisdom) || 10,
+        charisma: parseInt(req.body.charisma) || 10,
+        // Appearance fields
+        skinColor: req.body.skinColor || "#fdd5b1",
+        hairColor: req.body.hairColor || "#3d2817",
+        hairStyle: req.body.hairStyle || "short",
+        eyeColor: req.body.eyeColor || "#4a90e2",
+        bodyType: req.body.bodyType || "average",
+        armor: req.body.armor || "leather",
+        armorColor: req.body.armorColor || "#8b4513",
+        weapon: req.body.weapon || "sword",
+        accessory: req.body.accessory || "none",
+        userId: req.session.userId
+      }
+    });
+
+    req.flash('success', 'Character created successfully!');
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error(error);
+    req.flash('error', 'Error creating character');
+    res.redirect('/character/create');
+  }
+});
+
+// Get a single character by ID (for Unity loading)
+app.get('/character/:id', isAuthenticated, async (req, res) => {
+  try {
+    const character = await prisma.character.findUnique({
+      where: { id: req.params.id }
+    });
+    
+    if (!character) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+    
+    // Optional: Check if the character belongs to the logged-in user
+    if (character.userId !== req.session.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    
+    res.json(character);
+  } catch (error) {
+    console.error('Error fetching character:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
 app.get('/login', (req, res) => {
   res.render('login', { messages: req.flash() });
 });
@@ -265,105 +463,6 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
   }
 });
 
-app.get('/character/create', isAuthenticated, (req, res) => {
-  res.render('character-create', { 
-    user: req.session.user,
-    messages: req.flash() 
-  });
-});
-
-// Simulated AI Features
-const simulateAI = {
-  generateBackstory: (character) => {
-    const races = {
-      'Human': 'adaptable and versatile',
-      'Elf': 'graceful and long-lived',
-      'Dwarf': 'sturdy and traditional',
-      'Halfling': 'lucky and cheerful',
-      'Orc': 'strong and tribal'
-    };
-    
-    const classes = {
-      'Warrior': 'mighty warrior',
-      'Mage': 'wise spellcaster',
-      'Rogue': 'stealthy trickster',
-      'Cleric': 'devout healer',
-      'Ranger': 'nature-bound hunter'
-    };
-
-    const traits = [
-      'brave and determined',
-      'mysterious past',
-      'seeking redemption',
-      'on a great quest',
-      'hiding a secret',
-      'blessed by fate',
-      'cursed by magic'
-    ];
-
-    const randomTrait = traits[Math.floor(Math.random() * traits.length)];
-    
-    return `${character.name} is a ${races[character.race] || 'unique'} ${character.race} who became a ${classes[character.class] || 'skilled'} ${character.class}. Known to be ${randomTrait}, they embark on adventures across the land.`;
-  },
-
-  suggestName: (race, charClass) => {
-    const nameSuggestions = {
-      'Human': ['Aric', 'Bryn', 'Cael', 'Dane', 'Eris'],
-      'Elf': ['Elara', 'Faelen', 'Galad', 'Ithil', 'Lorien'],
-      'Dwarf': ['Borin', 'Durin', 'Gimli', 'Thrain', 'Ulfgar'],
-      'Halfling': ['Bilbo', 'Frodo', 'Pippin', 'Samwise', 'Merry'],
-      'Orc': ['Grom', 'Karg', 'Mog', 'Thrak', 'Urzog']
-    };
-
-    const raceNames = nameSuggestions[race] || ['Unknown'];
-    return raceNames[Math.floor(Math.random() * raceNames.length)];
-  },
-
-  analyzeStats: (stats) => {
-    const total = Object.values(stats).reduce((a, b) => a + b, 0);
-    if (total > 80) return 'Exceptional potential';
-    if (total > 65) return 'Above average abilities';
-    if (total > 50) return 'Average capabilities';
-    return 'Could use improvement';
-  }
-};
-
-app.post('/character/create', isAuthenticated, async (req, res) => {
-  try {
-    const character = await prisma.character.create({
-      data: {
-        name: req.body.name,
-        race: req.body.race,
-        class: req.body.class,
-        level: parseInt(req.body.level) || 1,
-        strength: parseInt(req.body.strength) || 10,
-        dexterity: parseInt(req.body.dexterity) || 10,
-        constitution: parseInt(req.body.constitution) || 10,
-        intelligence: parseInt(req.body.intelligence) || 10,
-        wisdom: parseInt(req.body.wisdom) || 10,
-        charisma: parseInt(req.body.charisma) || 10,
-        // Appearance fields
-        skinColor: req.body.skinColor || "#fdd5b1",
-        hairColor: req.body.hairColor || "#3d2817",
-        hairStyle: req.body.hairStyle || "short",
-        eyeColor: req.body.eyeColor || "#4a90e2",
-        bodyType: req.body.bodyType || "average",
-        armor: req.body.armor || "leather",
-        armorColor: req.body.armorColor || "#8b4513",
-        weapon: req.body.weapon || "sword",
-        accessory: req.body.accessory || "none",
-        userId: req.session.userId
-      }
-    });
-
-    req.flash('success', 'Character created successfully!');
-    res.redirect('/dashboard');
-  } catch (error) {
-    console.error(error);
-    req.flash('error', 'Error creating character');
-    res.redirect('/character/create');
-  }
-});
 
 
 // Add new route for randomizing appearance
@@ -433,42 +532,6 @@ app.post('/ai/suggest-name', isAuthenticated, (req, res) => {
   res.json({ success: true, name });
 });
 
-app.get('/character/:id', isAuthenticated, async (req, res) => {
-  try {
-    const character = await prisma.character.findFirst({
-      where: { 
-        id: req.params.id,
-        userId: req.session.userId 
-      }
-    });
-
-    if (!character) {
-      req.flash('error', 'Character not found');
-      return res.redirect('/dashboard');
-    }
-
-    // Simulate AI analysis
-    const stats = {
-      strength: character.strength,
-      dexterity: character.dexterity,
-      constitution: character.constitution,
-      intelligence: character.intelligence,
-      wisdom: character.wisdom,
-      charisma: character.charisma
-    };
-    
-    const aiAnalysis = simulateAI.analyzeStats(stats);
-
-    res.render('character-view', {
-      user: req.session.user,
-      character,
-      aiAnalysis
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
-  }
-});
 
 app.get('/admin', isAuthenticated, isAdmin, async (req, res) => {
   try {

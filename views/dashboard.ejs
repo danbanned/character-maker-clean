@@ -440,7 +440,7 @@
       <div class="podium">
 
         <% if (topCharacters.length >= 2) { %>
-        <div class="podium-item second" onclick="window.location='/character/<%= topCharacters[1].id %>'">
+        <div class="podium-item second" onclick="window.location='/character-view/<%= topCharacters[1].id %>'">
           <div class="avatar-wrapper">
             <div id="podium-avatar-<%= topCharacters[1].id %>"></div>
           </div>
@@ -451,7 +451,7 @@
         <% } %>
 
         <% if (topCharacters.length >= 1) { %>
-        <div class="podium-item first" onclick="window.location='/character/<%= topCharacters[0].id %>'">
+        <div class="podium-item first" onclick="window.location='/character-view/<%= topCharacters[0].id %>'">
           <div class="avatar-wrapper">
             <div id="podium-avatar-<%= topCharacters[0].id %>"></div>
           </div>
@@ -462,7 +462,7 @@
         <% } %>
 
         <% if (topCharacters.length >= 3) { %>
-        <div class="podium-item third" onclick="window.location='/character/<%= topCharacters[2].id %>'">
+        <div class="podium-item third" onclick="window.location='/character-view/<%= topCharacters[2].id %>'">
           <div class="avatar-wrapper">
             <div id="podium-avatar-<%= topCharacters[2].id %>"></div>
           </div>
@@ -508,7 +508,8 @@
           <% } %>
 
           <div class="card-actions">
-            <a href="/character/<%= character.id %>" class="btn-card btn-view">👁 View</a>
+            <!-- CORRECT - goes to the full page view -->
+              <a href="/character-view/<%= character.id %>" class="btn-card btn-view">👁 View</a>
             <button onclick="generateBackstory('<%= character.id %>')"
                     class="btn-card btn-ai" id="ai-btn-<%= character.id %>">
               ✨ AI Story
@@ -612,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <% }); %>
   <% } %> 
 
-  // Character card avatars
+  // Character card avatars -----------------------------------------
   <% if (characters && characters.length > 0) { %>
     <% characters.forEach((character, idx) => { %>
     (function() {
@@ -639,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const svg = el.querySelector('svg');
           if (svg) { svg.style.filter = 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'; }
         });
-        el.addEventListener('click', () => window.location.href = '/character/<%= character.id %>');
+        el.addEventListener('click', () => window.location.href = '/character-view/<%= character.id %>');
         el.style.cursor = 'pointer';
       }
     })();
@@ -647,4 +648,5 @@ document.addEventListener('DOMContentLoaded', () => {
   <% } %>
 
 });
+
 </script>

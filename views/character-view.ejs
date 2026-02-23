@@ -21,6 +21,8 @@
     font-family: 'Nunito Sans', sans-serif;
     color: #fff;
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
   }
 
   /* ── STAR FIELD ── */
@@ -43,6 +45,51 @@
     50%      { opacity:0.7; transform:scale(1); }
   }
 
+  /* ── UNITY BACKGROUND CONTAINER ── */
+  #unity-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;              /* behind UI */
+    pointer-events: none;    /* don't block clicks initially */
+    opacity: 0.7;             /* subtle background effect */
+    transition: opacity 0.3s ease;
+  }
+
+  #unity-bg canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  /* ── GAME MODE ACTIVE STYLES ── */
+  .game-mode-active #unity-bg {
+    z-index: 1000;
+    pointer-events: auto;
+    opacity: 1;
+  }
+
+  .game-mode-active .cv-wrapper {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  .game-mode-active #exit-3d-btn {
+    display: block !important;
+  }
+
+  /* ── EXIT BUTTON ── */
+  #exit-3d-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: none;
+  }
+
   /* ── PAGE WRAPPER ── */
   .cv-wrapper {
     position: relative;
@@ -50,6 +97,7 @@
     max-width: 1100px;
     margin: 0 auto;
     padding: 30px 20px 80px;
+    transition: opacity 0.5s ease;
   }
 
   /* ── TOP NAV BAR ── */
@@ -445,22 +493,67 @@
     animation: fadeIn 0.3s ease;
   }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── CHARACTER SELECTION DROPDOWN ── */
+  .character-selector {
+    margin-bottom: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 15px;
+  }
+  
+  .character-selector select {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 8px;
+    font-family: 'Nunito Sans', sans-serif;
+    margin-top: 8px;
+  }
+  
+  .character-selector button {
+    margin-top: 10px;
+    width: 100%;
+  }
 </style>
+
+<!-- Unity WebGL Canvas -->
+<canvas id="unity-bg"></canvas>
 
 <!-- Star field -->
 <div class="star-field" id="starField"></div>
 
-<div class="cv-wrapper">
+<!-- Exit button (hidden by default) -->
+<div id="exit-3d-btn">
+  <button onclick="exitGameMode()" class="btn-back">← Exit 3D Mode</button>
+</div>
 
+<div class="cv-wrapper">
   <!-- Top bar -->
   <div class="cv-topbar">
     <h2 class="cv-title">⚔️ <span><%= character.name %></span></h2>
     <a href="/dashboard" class="btn-back">← Dashboard</a>
   </div>
 
+  <!-- Character Selector (for testing/demo purposes) -->
+  <% if (allCharacters && allCharacters.length > 1) { %>
+  <div class="character-selector k-card">
+    <div class="k-card-title">🔄 Switch Character</div>
+    <select id="characterSelect">
+      <% allCharacters.forEach(char => { %>
+        <option value="<%= char.id %>" <%= char.id === character.id ? 'selected' : '' %>>
+          <%= char.name %> (Level <%= char.level %> <%= char.race %> <%= char.class %>)
+        </option>
+      <% }) %>
+    </select>
+    <button class="btn-action cast" onclick="loadSelectedCharacter()">Load in 3D</button>
+  </div>
+  <% } %>
+
   <!-- Main grid -->
   <div class="cv-grid">
-
     <!-- ── LEFT: Avatar card ── -->
     <div class="k-card avatar-card">
       <div class="k-card-title">🧝 Character</div>
@@ -517,7 +610,6 @@
 
     <!-- ── RIGHT: Details column ── -->
     <div style="display:flex; flex-direction:column; gap:18px;">
-
       <!-- Stats -->
       <div class="k-card">
         <div class="k-card-title">📊 Character Stats</div>
@@ -630,8 +722,17 @@
             🗡️ Suggest Equipment
           </button>
         </div>
-      </div>
+        
+        <!-- START GAME BUTTON -->
+        <button id="startGameBtn" class="btn-action victory" style="width:100%; margin-top:10px;">
+          🎮 Enter 3D Mode with <%= character.name %>
+        </button>
 
+        <!-- Quick load button -->
+        <button id="quickLoadBtn" class="btn-action cast" style="width:100%; margin-top:5px;" onclick="loadSelectedCharacter()">
+          🔄 Update 3D Character
+        </button>
+      </div>
     </div><!-- /right col -->
   </div><!-- /cv-grid -->
 </div><!-- /cv-wrapper -->
@@ -641,6 +742,42 @@
 <script src="/js/avatarRenderer.js"></script>
 
 <script>
+// ── Global variables ─────────────────────────────────────────
+window.currentCharacterId = '<%= character.id %>';
+window.unityIsReady = false;
+window.pendingCharacterPayload = null;
+const MAX_UNITY_SEND_RETRIES = 10;
+
+function trySendCharacterPayload(payload, retryCount = 0) {
+  if (!window.unityInstance || !window.unityIsReady) {
+    window.pendingCharacterPayload = payload;
+    return false;
+  }
+
+  try {
+    window.unityInstance.SendMessage(
+      "PlayerCustomizationManager",
+      "ApplyCharacterData",
+      payload
+    );
+    window.pendingCharacterPayload = null;
+    console.log("✅ Character data sent to Unity");
+    return true;
+  } catch (error) {
+    const msg = String(error && error.message ? error.message : error);
+    console.error("SendMessage failed:", error);
+
+    if (msg.includes("PlayerCustomizationManager not found") && retryCount < MAX_UNITY_SEND_RETRIES) {
+      window.pendingCharacterPayload = payload;
+      setTimeout(() => trySendCharacterPayload(payload, retryCount + 1), 300);
+      return false;
+    }
+
+    showToast('❌ Failed to send character to Unity');
+    return false;
+  }
+}
+
 // ── Star field ──────────────────────────────────────────────
 (function() {
   const sf = document.getElementById('starField');
@@ -690,7 +827,6 @@ document.addEventListener('DOMContentLoaded', () => {
     controls.innerHTML = window.avatarRenderer.createAnimationControls('avatarContainer');
   }
 
-  // Animate stat bars on load
   document.querySelectorAll('.stat-bar').forEach(bar => {
     const val = parseInt(bar.dataset.val) || 0;
     const pct = Math.min((val / 20) * 100, 100);
@@ -701,26 +837,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Actions ──────────────────────────────────────────────────
 function doAction(action) {
   if (window.triggerAnimation) window.triggerAnimation('avatarContainer', action);
-
+  
   const charClass = '<%= character.class %>';
   const messages = {
-    attack: [
-      '⚔️ A powerful strike lands true!',
-      '⚔️ The weapon connects with bone-crushing force!',
-      '⚔️ A precision blow finds its mark!'
-    ],
+    attack: ['⚔️ A powerful strike lands true!', '⚔️ The weapon connects!', '⚔️ A precision blow!'],
     cast: {
-      'Mage':    ['✨ Fireball!', '✨ Lightning Bolt!', '✨ Ice Storm!'],
-      'Cleric':  ['✨ Divine Smite!', '✨ Healing Word!', '✨ Turn Undead!'],
-      'Ranger':  ["✨ Hunter's Mark!", '✨ Hail of Thorns!', '✨ Ensnaring Strike!'],
+      'Mage': ['✨ Fireball!', '✨ Lightning Bolt!', '✨ Ice Storm!'],
+      'Cleric': ['✨ Divine Smite!', '✨ Healing Word!', '✨ Turn Undead!'],
+      'Ranger': ["✨ Hunter's Mark!", '✨ Hail of Thorns!', '✨ Ensnaring Strike!'],
       'Warrior': ['✨ Battle Cry!', '✨ Whirlwind!', '✨ Shield Bash!'],
-      'Rogue':   ['✨ Smoke Bomb!', '✨ Poison Strike!', '✨ Shadow Step!']
+      'Rogue': ['✨ Smoke Bomb!', '✨ Poison Strike!', '✨ Shadow Step!']
     },
-    victory: [
-      '🎉 Victory! The crowd goes wild!',
-      '🎉 Triumphant! A hero stands tall!',
-      '🎉 Glorious win! Legend grows!'
-    ]
+    victory: ['🎉 Victory!', '🎉 Triumphant!', '🎉 Glorious win!']
   };
 
   let msg;
@@ -728,10 +856,8 @@ function doAction(action) {
     const spells = messages.cast[charClass] || ['✨ Special Ability!'];
     msg = spells[Math.floor(Math.random() * spells.length)];
   } else {
-    const arr = messages[action];
-    msg = arr[Math.floor(Math.random() * arr.length)];
+    msg = messages[action][Math.floor(Math.random() * messages[action].length)];
   }
-
   setTimeout(() => showActionResult(msg), 300);
 }
 
@@ -760,11 +886,11 @@ async function generateBackstoryForView(characterId) {
 async function optimizeStatsForView(characterId) {
   const charClass = '<%= character.class %>';
   const templates = {
-    'Warrior': { strength:16, dexterity:14, constitution:15, intelligence:8,  wisdom:10, charisma:12 },
-    'Mage':    { strength:8,  dexterity:12, constitution:10, intelligence:16, wisdom:14, charisma:13 },
-    'Rogue':   { strength:12, dexterity:16, constitution:13, intelligence:14, wisdom:10, charisma:15 },
-    'Cleric':  { strength:12, dexterity:10, constitution:14, intelligence:13, wisdom:16, charisma:15 },
-    'Ranger':  { strength:14, dexterity:15, constitution:13, intelligence:12, wisdom:14, charisma:10 }
+    'Warrior': { strength:16, dexterity:14, constitution:15, intelligence:8, wisdom:10, charisma:12 },
+    'Mage': { strength:8, dexterity:12, constitution:10, intelligence:16, wisdom:14, charisma:13 },
+    'Rogue': { strength:12, dexterity:16, constitution:13, intelligence:14, wisdom:10, charisma:15 },
+    'Cleric': { strength:12, dexterity:10, constitution:14, intelligence:13, wisdom:16, charisma:15 },
+    'Ranger': { strength:14, dexterity:15, constitution:13, intelligence:12, wisdom:14, charisma:10 }
   };
   const stats = templates[charClass] || { strength:10, dexterity:10, constitution:10, intelligence:10, wisdom:10, charisma:10 };
   showToast('🎯 Optimizing stats…');
@@ -772,11 +898,11 @@ async function optimizeStatsForView(characterId) {
     const res = await fetch('/character/update-stats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ characterId, stats, aiNotes: `AI-optimized for ${charClass} on ${new Date().toLocaleDateString()}` })
+      body: JSON.stringify({ characterId, stats, aiNotes: `AI-optimized for ${charClass}` })
     });
     const data = await res.json();
     if (data.success) {
-      showToast('✅ Stats optimized for ' + charClass + '!');
+      showToast('✅ Stats optimized!');
       setTimeout(() => location.reload(), 1200);
     } else {
       showToast('⚠️ Could not optimize stats');
@@ -792,11 +918,123 @@ function suggestEquipment() {
   const race = '<%= character.race %>';
   const gear = {
     'Warrior': 'Plate armor, greatsword & shield',
-    'Mage':    'Enchanted robe, arcane staff',
-    'Rogue':   'Shadow leather, twin daggers',
-    'Cleric':  'Chainmail, blessed mace & holy symbol',
-    'Ranger':  'Studded leather, longbow & quiver'
+    'Mage': 'Enchanted robe, arcane staff',
+    'Rogue': 'Shadow leather, twin daggers',
+    'Cleric': 'Chainmail, blessed mace & holy symbol',
+    'Ranger': 'Studded leather, longbow & quiver'
   };
   showToast(`🗡️ ${race} ${charClass}: ${gear[charClass] || 'Adventuring gear'}`);
 }
+
+// ── Fetch character data from server ────────────────────
+async function fetchCharacterFromServer(characterId) {
+  try {
+    const res = await fetch(`/character/${characterId}`);
+    if (!res.ok) throw new Error('Failed to fetch character');
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching character:', error);
+    showToast('❌ Failed to load character data');
+    return null;
+  }
+}
+
+// ── Load character into Unity with retry ─────────────────
+async function loadCharacterInUnity(characterId) {
+  if (!window.unityInstance || !window.unityIsReady) {
+    console.log("⏳ Unity not ready yet. Will retry in 500ms.");
+    setTimeout(() => loadCharacterInUnity(characterId), 500);
+    return;
+  }
+
+  showToast('📤 Loading character into 3D...');
+  const character = await fetchCharacterFromServer(characterId);
+  
+  if (character) {
+    const sent = trySendCharacterPayload(JSON.stringify(character));
+    if (sent) {
+      showToast('✅ Character loaded in 3D!');
+    }
+  }
+}
+
+// ── Load selected character from dropdown ───────────────
+async function loadSelectedCharacter() {
+  const select = document.getElementById('characterSelect');
+  if (!select) return;
+  await loadCharacterInUnity(select.value);
+}
+
+// ── GAME MODE FUNCTIONS ──────────────────────────────────────
+function enterGameMode() {
+  document.body.classList.add('game-mode-active');
+  if (window.unityInstance) {
+    window.unityInstance.SendMessage("WebManager", "SetInteractive", "true");
+  }
+  showToast('🎮 Entering 3D Mode...');
+}
+
+function exitGameMode() {
+  document.body.classList.remove('game-mode-active');
+  if (window.unityInstance) {
+    window.unityInstance.SendMessage("WebManager", "SetInteractive", "false");
+  }
+  showToast('↩️ Exited 3D Mode');
+}
+</script>
+
+<!-- Unity Loader -->
+<script src="/Unity/BuildWebGL/Build/BuildWebGL.loader.js"></script>
+
+<script>
+// Called by Unity when PlayerCustomizationManager.Start() runs
+window.UnityReady = function () {
+  console.log("✅ Unity says PlayerCustomizationManager is ready");
+  window.unityIsReady = true;
+
+  if (window.pendingCharacterPayload) {
+    trySendCharacterPayload(window.pendingCharacterPayload);
+  }
+
+  // Now it's safe to send character data
+  if (window.currentCharacterId && window.unityInstance) {
+    loadCharacterInUnity(window.currentCharacterId);
+  }
+};
+
+// Initialize Unity
+if (!window.unityInstance) {
+  const canvas = document.getElementById("unity-bg");
+  
+  if (canvas) {
+    createUnityInstance(canvas, {
+      dataUrl: "/Unity/BuildWebGL/Build/BuildWebGL.data",
+      frameworkUrl: "/Unity/BuildWebGL/Build/BuildWebGL.framework.js",
+      codeUrl: "/Unity/BuildWebGL/Build/BuildWebGL.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "YourCompany",
+      productName: "CharacterMaker",
+      productVersion: "1.0",
+    }).then((instance) => {
+      window.unityInstance = instance;
+      console.log("Unity instance created");
+    }).catch((err) => console.error("Unity initialization error:", err));
+  }
+}
+
+// Start Game button
+document.addEventListener('DOMContentLoaded', function () {
+  const startBtn = document.getElementById('startGameBtn');
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      if (!window.unityInstance) return showToast('⏳ Unity loading...');
+      if (!window.unityIsReady) return showToast('⏳ Unity initializing...');
+      
+      loadCharacterInUnity(window.currentCharacterId).then(() => {
+        enterGameMode();
+      });
+    });
+  }
+});
 </script>
