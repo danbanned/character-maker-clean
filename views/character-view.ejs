@@ -1,4 +1,3 @@
-<!-- views/character-view.ejs -->
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
@@ -749,7 +748,10 @@ window.pendingCharacterPayload = null;
 const MAX_UNITY_SEND_RETRIES = 10;
 
 function trySendCharacterPayload(payload, retryCount = 0) {
+  //if the Unity instance isn't ready, store the payload and try again later
   if (!window.unityInstance || !window.unityIsReady) {
+    //then we stor the payload in a global variable so it can be sent once Unity is ready because window is a global varuiable 
+    //whatever we set on it will be accessible from anywhere, including the Unity instance when it initializes
     window.pendingCharacterPayload = payload;
     return false;
   }
@@ -758,8 +760,22 @@ function trySendCharacterPayload(payload, retryCount = 0) {
     window.unityInstance.SendMessage(
       "PlayerCustomizationManager",
       "ApplyCharacterData",
+      "DebugCharacterParts",
       payload
+      //this is what sends our character data 
     );
+
+{ try {
+        window.unityInstance.SendMessage(
+            "PlayerCustomizationManager",
+            "DebugCharacterParts",  // This method takes NO parameters
+            ""  // Empty string since no parameter needed
+        );
+    } catch (error) {
+        console.error("Failed to send debug message:", error);
+    }}
+
+  
     window.pendingCharacterPayload = null;
     console.log("✅ Character data sent to Unity");
     return true;
@@ -769,7 +785,9 @@ function trySendCharacterPayload(payload, retryCount = 0) {
 
     if (msg.includes("PlayerCustomizationManager not found") && retryCount < MAX_UNITY_SEND_RETRIES) {
       window.pendingCharacterPayload = payload;
+      //we use setTimeout to schedule a retry after a short delay (300ms in this case). This gives Unity some time to finish initializing and hopefully have the PlayerCustomizationManager ready to receive messages.
       setTimeout(() => trySendCharacterPayload(payload, retryCount + 1), 300);
+      // We return false here because the send hasn't succeeded yet, but we have scheduled a retry. The payload is stored in window.pendingCharacterPayload and will be sent when Unity is ready.
       return false;
     }
 
@@ -777,6 +795,8 @@ function trySendCharacterPayload(payload, retryCount = 0) {
     return false;
   }
 }
+
+
 
 // ── Star field ──────────────────────────────────────────────
 (function() {
@@ -809,6 +829,7 @@ function showActionResult(msg) {
 
 // ── Character data ───────────────────────────────────────────
 const characterData = <%- JSON.stringify(character) %>;
+console.log("Character data for Unity:", characterData);
 
 // ── Render avatar ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -951,7 +972,9 @@ async function loadCharacterInUnity(characterId) {
   const character = await fetchCharacterFromServer(characterId);
   
   if (character) {
+    //this is where we attempt to send the character data to Unity. We stringify the character object and send it as a payload. The trySendCharacterPayload function will handle the actual sending and retry logic if Unity isn't ready yet.ikbyyyybyoo]]]]]]]
     const sent = trySendCharacterPayload(JSON.stringify(character));
+    //this is needed because sometimes the payload fails to send on the first try, even if Unity is ready. So we attempt to send it, and if it fails, we show an error toast. If it succeeds, we show a success toast. This way the user gets feedback either way.
     if (sent) {
       showToast('✅ Character loaded in 3D!');
     }

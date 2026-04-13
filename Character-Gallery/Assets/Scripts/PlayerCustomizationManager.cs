@@ -3,30 +3,40 @@ using UnityEngine;
 
 public class PlayerCustomizationManager : MonoBehaviour
 {
-    #if UNITY_WEBGL && !UNITY_EDITOR
+    
+#if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
     private static extern void UnityReady();
-    #endif
+#endif
 
     public static PlayerCustomizationManager Instance;
 
-    [Header("Body Part References")]
+    [Header("Core Renderers")]
     public SkinnedMeshRenderer body;
-    public SkinnedMeshRenderer hair;
     public SkinnedMeshRenderer eyes;
-    public SkinnedMeshRenderer armor;
+
+    [Header("Hair Options")]
+    public GameObject[] hairStyles;
+
+    [Header("Clothing Options")]
+    public GameObject[] topsOptions;
+    public GameObject[] bottomsOptions;
+    public GameObject[] shoesOptions;
+
+    [Header("Equipment")]
+    public GameObject[] weaponOptions;
+    public GameObject[] accessoryOptions;
 
     void Awake()
     {
-        // Singleton pattern
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
 
-        // JS SendMessage target must match this name exactly.
         if (gameObject.name != "PlayerCustomizationManager")
             gameObject.name = "PlayerCustomizationManager";
 
@@ -38,30 +48,88 @@ public class PlayerCustomizationManager : MonoBehaviour
     {
         Debug.Log("PlayerCustomizationManager STARTED");
 
-        #if UNITY_WEBGL && !UNITY_EDITOR
-        UnityReady(); // Notify JS that Unity is ready
-        #endif
+#if UNITY_WEBGL && !UNITY_EDITOR
+        UnityReady();
+#endif
     }
 
-    // Called from JS
+    // =========================
+    // MAIN ENTRY FROM WEB
+    // =========================
     public void ApplyCharacterData(string json)
     {
         Debug.Log("JSON RECEIVED: " + json);
         CharacterData data = JsonUtility.FromJson<CharacterData>(json);
 
+        // Colors
         ApplyColor(body, data.skinColor);
-        ApplyColor(hair, data.hairColor);
         ApplyColor(eyes, data.eyeColor);
-        ApplyColor(armor, data.armorColor);
+        SetHairColor(data.hairColor);
 
-        Debug.Log($"Weapon: {data.weapon}, Accessory: {data.accessory}");
+        // Styles
+        SetActiveByName(hairStyles, data.hairStyle);
+        SetActiveByName(topsOptions, data.armorColor);
+        SetActiveByName(bottomsOptions, data.armorColor);   // if linked
+        SetActiveByName(shoesOptions, data.armorColor);     // if linked
+
+        // Equipment
+        SetActiveByName(weaponOptions, data.weapon);
+        SetActiveByName(accessoryOptions, data.accessory);
     }
 
-    private void ApplyColor(SkinnedMeshRenderer rend, string hex)
+    // =========================
+    // COLOR SYSTEM
+    // =========================
+    void ApplyColor(SkinnedMeshRenderer rend, string hex)
     {
         if (rend == null) return;
+
         if (ColorUtility.TryParseHtmlString(hex, out Color color))
-            rend.material.color = color;
+        {
+            foreach (Material mat in rend.materials)
+            {
+                if (mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", color);
+                else if (mat.HasProperty("_Color"))
+                    mat.color = color;
+            }
+        }
+    }
+
+    void SetHairColor(string hex)
+    {
+        if (hairStyles == null) return;
+
+        foreach (GameObject hair in hairStyles)
+        {
+            if (!hair.activeSelf) continue;
+
+            SkinnedMeshRenderer rend = hair.GetComponent<SkinnedMeshRenderer>();
+            if (rend != null)
+                ApplyColor(rend, hex);
+        }
+    }
+
+    // =========================
+    // GAMEOBJECT SWITCHING SYSTEM
+    // =========================
+    void SetActiveByName(GameObject[] options, string targetName)
+    {
+        if (options == null || options.Length == 0) return;
+
+        foreach (GameObject obj in options)
+            obj.SetActive(false);
+
+        foreach (GameObject obj in options)
+        {
+            if (obj.name.ToLower() == targetName.ToLower())
+            {
+                obj.SetActive(true);
+                return;
+            }
+        }
+
+        Debug.LogWarning("Option not found: " + targetName);
     }
 
     public void TestMessage()
@@ -77,6 +145,7 @@ public class CharacterData
     public string hairColor;
     public string hairStyle;
     public string eyeColor;
+    public string bodyType;
     public string armor;
     public string armorColor;
     public string weapon;
